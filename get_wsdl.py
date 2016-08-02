@@ -20,14 +20,18 @@ def get_file(url):
 def get_file_name_from_url(url):
     last_slash = url.rfind('/')
     filename = url[last_slash + 1:]
-    qwsdl = filename.rfind('?wsdl')
-    #wsdl
-    if qwsdl > 0:
-        return filename[:qwsdl] + '.wsdl'
+    wsdl_ends = '?wsdl'
+    #?wsdl
+    if filename.endswith(wsdl_ends):
+        return filename[:-5] + '.wsdl'
     xsd_param = filename.rfind('?xsd=')
-    #xsd
+    #xsd=...
     if xsd_param > 0:
         return filename[xsd_param+5:]
+    wsdl_param = filename.rfind('?wsdl=')
+    #wsdl=..
+    if wsdl_param > 0:
+        return filename[wsdl_param+6:]
     return filename
 
 
@@ -45,6 +49,13 @@ match all inside schemaLocation=" ... "
 """
 def extract_schema_files(content):
     p = re.compile('schemaLocation="(.*?)"');
+    return p.findall(content)
+
+"""
+extract additional *.xsd files from <import location="..."> tag 
+"""
+def extract_import_files(content):
+    p = re.compile('import.location="(.*?)"');
     return p.findall(content)
 
 """ replace remote schema locations with local names """
@@ -72,6 +83,9 @@ while files_to_process:
     content = get_file(url).decode('UTF-8')
     #get schemaLocation urls
     urls = extract_schema_files(content)
+    import_urls = extract_import_files(content)
+    if import_urls:
+        urls.extend(import_urls)
     #replace remote locations with local file names
     content = replace_remote_schema_locations(content, urls)
     #put urls in process queue
