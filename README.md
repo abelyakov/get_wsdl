@@ -7,4 +7,4 @@ get_wsdl.py <wsdl_url>
 ```
 
 ##Requirements
-pycurl===7.43.0
+pycurl==7.43.0
